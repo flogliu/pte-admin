@@ -14,7 +14,11 @@
       "destination": "https://pte.chardle.net/app/$1"
     },
     {
-      "source": "/((?!admin/|app/).*)",
+      "source": "/uploads/:path*",
+      "destination": "https://pte.chardle.net/uploads/:path*"
+    },
+    {
+      "source": "/((?!admin/|app/|uploads/).*)",
       "destination": "/index.html"
     }
   ]
