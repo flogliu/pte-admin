@@ -18,7 +18,11 @@
           <el-button @click="resetQuery">
             <el-icon><RefreshLeft /></el-icon>重置
           </el-button>
-          <el-tooltip content="高级筛选">
+          <el-tooltip
+            content="高级筛选"
+            placement="top"
+            :disabled="advancedOpen"
+          >
             <el-button :icon="ArrowDown" circle @click="advancedOpen = !advancedOpen" />
           </el-tooltip>
         </el-form-item>
@@ -72,10 +76,6 @@
                 :label="t.label"
                 :value="t.id"
               />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="难度">
-            <el-select v-model="query.difficulty" placeholder="全部" clearable style="width: 140px">
             </el-select>
           </el-form-item>
           <el-form-item label="标记">
@@ -348,7 +348,6 @@ const query = reactive<QuestionQuery>({
   question_type_id: undefined,
   type_section: '',
   keyword: '',
-  difficulty: undefined,
   purpose: '',
   status: '',
 })
@@ -452,7 +451,6 @@ function resetQuery() {
   query.question_type_id = undefined
   query.type_section = ''
   query.keyword = ''
-  query.difficulty = undefined
   query.purpose = ''
   query.status = ''
   loadList()
