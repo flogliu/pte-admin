@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "rewrites": [
+    {
+      "source": "/admin/(.*)",
+      "destination": "https://pte.chardle.net/admin/$1"
+    },
+    {
+      "source": "/app/(.*)",
+      "destination": "https://pte.chardle.net/app/$1"
+    },
+    {
+      "source": "/((?!admin/|app/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
