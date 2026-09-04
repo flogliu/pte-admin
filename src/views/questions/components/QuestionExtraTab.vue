@@ -22,7 +22,6 @@
         {{ item.label }}
       </el-radio>
     </el-radio-group>
-    <p class="purpose-hint">真题、练习用于刷题与每日练习；模考仅用于组卷，不进入刷题池。</p>
   </el-form-item>
 </template>
 
@@ -59,12 +58,5 @@ const difficultyModel = computed({
 .score-hint {
   font-size: 13px;
   color: #909399;
-}
-
-.purpose-hint {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: #909399;
-  line-height: 1.4;
 }
 </style>
