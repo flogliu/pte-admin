@@ -87,7 +87,7 @@ service.interceptors.response.use(
 )
 
 export function request<T = any>(config: PteAxiosRequestConfig): Promise<T> {
-  return service.request<any, T>(config)
+  return service.request(config) as Promise<T>
 }
 
 export default service

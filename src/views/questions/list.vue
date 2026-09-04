@@ -353,11 +353,18 @@ const query = reactive<QuestionQuery>({
   status: '',
 })
 
-function typeZhLabel(row: Question): string {
+function typeZhLabel(row: { question_type_id?: number }): string {
   const id = row.question_type_id
-  if (!id) return ''
-  const t = questionTypes.value.find((x) => x.id === id)
-  return t?.title || t?.label_name || ''
+  if (!id) {
+    return ''
+  } else {
+    const hit = questionTypes.value.find((item) => item.id === id)
+    if (hit) {
+      return hit.title || hit.label_name || ''
+    } else {
+      return ''
+    }
+  }
 }
 
 const sectionMap: Record<string, string> = {
@@ -371,27 +378,33 @@ function sectionLabel(s: string): string {
   return sectionMap[s] || s
 }
 
-function sectionTag(s: string): '' | 'success' | 'warning' | 'danger' | 'info' | 'primary' {
-  switch (s) {
-    case 'speaking':
-      return 'danger'
-    case 'writing':
-      return 'warning'
-    case 'reading':
-      return 'success'
-    case 'listening':
-      return 'primary'
-    default:
-      return 'info'
+type ElTagType = 'primary' | 'success' | 'warning' | 'info' | 'danger'
+
+function sectionTag(s: string): ElTagType {
+  if (s === 'speaking') {
+    return 'danger'
+  } else if (s === 'writing') {
+    return 'warning'
+  } else if (s === 'reading') {
+    return 'success'
+  } else if (s === 'listening') {
+    return 'primary'
+  } else {
+    return 'info'
   }
 }
 
-function difficultyTag(d: number | string | null): '' | 'success' | 'warning' | 'danger' | 'info' {
+function difficultyTag(d: number | string | null): ElTagType {
   const n = Number(d) || 0
-  if (n <= 2) return 'success'
-  if (n <= 4) return 'warning'
-  if (n <= 6) return 'danger'
-  return 'info'
+  if (n <= 2) {
+    return 'success'
+  } else if (n <= 4) {
+    return 'warning'
+  } else if (n <= 6) {
+    return 'danger'
+  } else {
+    return 'info'
+  }
 }
 
 async function loadMeta() {
@@ -457,7 +470,7 @@ function goEdit(id: number) {
   router.push(`/questions/edit/${id}`)
 }
 
-async function handleDelete(row: Question) {
+async function handleDelete(row: Record<PropertyKey, any>) {
   try {
     await ElMessageBox.confirm(`确定要删除题目「${row.title}」吗？此操作不可恢复。`, '删除确认', {
       type: 'warning',
