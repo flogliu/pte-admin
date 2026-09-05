@@ -14,8 +14,10 @@
         </div>
         <div class="header-right">
           <div class="header-actions">
-            <el-button @click="handleCancel">取消</el-button>
-            <el-button type="primary" :loading="submitting" @click="handleSubmit">保存</el-button>
+            <el-button @click="handleCancel">{{ t('common.cancel') }}</el-button>
+            <el-button type="primary" :loading="submitting" @click="handleSubmit">
+              {{ submitting ? t('common.saving') : t('common.save') }}
+            </el-button>
           </div>
         </div>
       </div>
@@ -29,6 +31,18 @@
       >
         <el-tabs v-model="activeTab" class="question-form-tabs">
           <el-tab-pane label="基础信息" name="basic">
+            <el-form-item label="题库类型" prop="purpose">
+              <el-radio-group v-model="form.purpose">
+                <el-radio
+                  v-for="item in QUESTION_PURPOSES"
+                  :key="item.value"
+                  :value="item.value"
+                >
+                  {{ item.label }}
+                </el-radio>
+              </el-radio-group>
+            </el-form-item>
+
             <el-row :gutter="20">
               <el-col :xs="24" :md="12">
                 <el-form-item label="考试类型" prop="exam_type">
@@ -498,8 +512,11 @@
             <QuestionMachineTab :form="form" />
           </el-tab-pane>
 
-          <el-tab-pane label="难度/标记" name="extra" :disabled="!hasTypeSelected">
-            <QuestionExtraTab :form="form" />
+          <el-tab-pane label="难度/点拨" name="extra" :disabled="!hasTypeSelected">
+            <QuestionExtraTab
+              :form="form"
+              :meta-fields="metaFields"
+            />
           </el-tab-pane>
         </el-tabs>
       </el-form>
@@ -520,6 +537,7 @@ import {
 } from '@/api/question'
 import type { QuestionForm, QuestionType } from '@/types'
 import { EXAM_TYPES } from '@/constants/exam'
+import { DEFAULT_PURPOSE, QUESTION_PURPOSES } from '@/constants/purpose'
 import { COUNTRY_DEFAULT } from '@/constants/country'
 import AudioContentFields from './components/AudioContentFields.vue'
 import AnswerShortQuestionFields from './components/AnswerShortQuestionFields.vue'
@@ -548,6 +566,7 @@ import QuestionExtraTab from './components/QuestionExtraTab.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 const id = computed(() => Number(route.params.id) || 0)
 const isEdit = computed(() => id.value > 0)
@@ -567,7 +586,7 @@ const form = reactive<QuestionForm>({
   title: '',
   content: '',
   difficulty: null,
-  purpose: 'practice',
+  purpose: DEFAULT_PURPOSE,
   status: 0,
   machine_source: COUNTRY_DEFAULT,
   machine_exam_date: '',
@@ -595,6 +614,7 @@ const metaFields = reactive({
     { text: '', checked: false },
   ] as McOptionDraft[],
   hiwIncorrectWords: [{ display: '', spoken: '' }] as HiwIncorrectWordDraft[],
+  coachingTip: '',
 })
 
 const metaJsonText = ref('{}')
@@ -605,6 +625,7 @@ const isDirty = computed(() => initialSnapshot.value !== buildSnapshot())
 const rules = computed<FormRules>(() => {
   const base: FormRules = {
     exam_type: [{ required: true, message: '请选择考试类型', trigger: 'change' }],
+    purpose: [{ required: true, message: '请选择题库类型', trigger: 'change' }],
     question_type_id: [
       { required: true, type: 'number', message: '请选择题型', trigger: 'change' },
     ],
@@ -950,6 +971,7 @@ function buildSnapshot(): string {
       reorderParagraphs: metaFields.reorderParagraphs,
       mcOptions: metaFields.mcOptions,
       hiwIncorrectWords: metaFields.hiwIncorrectWords,
+      coachingTip: metaFields.coachingTip,
     },
     metaJsonText: metaJsonText.value.trim(),
   })
@@ -965,11 +987,11 @@ async function confirmCancelIfDirty(): Promise<boolean> {
   }
   try {
     await ElMessageBox.confirm(
-      '当前修改尚未保存，确定要取消吗？',
-      '确认取消',
+      t('common.unsavedConfirm'),
+      t('common.unsavedTitle'),
       {
-        confirmButtonText: '确定取消',
-        cancelButtonText: '继续编辑',
+        confirmButtonText: t('common.confirmCancel'),
+        cancelButtonText: t('common.keepEditing'),
         type: 'warning',
       },
     )
@@ -1015,6 +1037,7 @@ async function handleResetMeta() {
     metaFields.hiwIncorrectWords.some(
       (item) => item.display.trim() !== '' || item.spoken.trim() !== '',
     ) ||
+    metaFields.coachingTip.trim() !== '' ||
     (metaJsonText.value.trim() !== '' && metaJsonText.value.trim() !== '{}')
   if (hasMeta) {
     try {
@@ -1040,9 +1063,19 @@ function applyMetaFromFields() {
   if (metaFields.referenceAudioUrl) merged.referenceAudioUrl = metaFields.referenceAudioUrl
   if (metaFields.transcript) merged.transcript = metaFields.transcript
   if (metaFields.answerText) merged.answerText = metaFields.answerText
+  if (metaFields.coachingTip.trim()) {
+    merged.coachingTip = metaFields.coachingTip.trim()
+  } else {
+    // strip later
+  }
   try {
     const existing = parseMetaJsonSafe()
     const finalObj = { ...existing, ...merged }
+    if (!metaFields.coachingTip.trim()) {
+      delete finalObj.coachingTip
+    } else {
+      // keep
+    }
     metaJsonText.value = JSON.stringify(finalObj, null, 2)
     metaJsonError.value = ''
   } catch (e: any) {
@@ -1111,6 +1144,11 @@ function loadMetaToFields() {
     } else {
       metaFields.answerText = obj.answerText || ''
     }
+    if (typeof obj.coachingTip === 'string') {
+      metaFields.coachingTip = obj.coachingTip
+    } else {
+      metaFields.coachingTip = ''
+    }
     metaJsonError.value = ''
   } catch (e: any) {
     metaJsonError.value = '解析失败：' + e.message
@@ -1135,6 +1173,7 @@ function resetMeta() {
   metaFields.reorderParagraphs = []
   metaFields.mcOptions = emptyMcOptions()
   metaFields.hiwIncorrectWords = [{ display: '', spoken: '' }]
+  metaFields.coachingTip = ''
   metaJsonError.value = ''
 }
 
@@ -1143,6 +1182,36 @@ function parseMetaJsonSafe(): Record<string, any> {
   const obj = JSON.parse(text)
   if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
     throw new Error('必须是 JSON 对象')
+  }
+  return obj
+}
+
+function cloneMetaObject(meta: unknown): Record<string, any> {
+  if (typeof meta === 'string' && meta.trim() !== '') {
+    try {
+      const parsed = JSON.parse(meta)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return { ...parsed }
+      } else {
+        return {}
+      }
+    } catch {
+      return {}
+    }
+  } else if (meta && typeof meta === 'object' && !Array.isArray(meta)) {
+    return { ...meta }
+  } else {
+    return {}
+  }
+}
+
+function attachCoachingTip(meta: unknown): Record<string, any> {
+  const tip = metaFields.coachingTip.trim()
+  const obj = cloneMetaObject(meta)
+  if (tip) {
+    obj.coachingTip = tip
+  } else {
+    delete obj.coachingTip
   }
   return obj
 }
@@ -1202,7 +1271,7 @@ async function loadForEdit() {
     form.title = q.title || ''
     form.content = q.content || ''
     form.difficulty = typeof q.difficulty === 'number' ? q.difficulty : null
-    form.purpose = q.purpose || 'practice'
+    form.purpose = q.purpose || DEFAULT_PURPOSE
     form.status = typeof q.status === 'number' ? q.status : null
     form.machine_source = q.machine_source || ''
     form.machine_exam_date = q.machine_exam_date || ''
@@ -1277,7 +1346,7 @@ function buildFormExtras(): Record<string, any> {
     exam_type: form.exam_type,
     question_type_id: form.question_type_id,
     difficulty: form.difficulty ?? null,
-    purpose: form.purpose || 'practice',
+    purpose: form.purpose || DEFAULT_PURPOSE,
     status: form.status ?? null,
     machine_source: form.machine_source || null,
     machine_exam_date: form.machine_exam_date || null,
@@ -2312,7 +2381,7 @@ async function handleSubmit() {
       title: form.title.trim(),
       content: form.content,
       difficulty: form.difficulty ?? null,
-      purpose: form.purpose || 'practice',
+      purpose: form.purpose || DEFAULT_PURPOSE,
       status: form.status ?? null,
       machine_source: form.machine_source || null,
       machine_exam_date: form.machine_exam_date || null,
@@ -2321,14 +2390,15 @@ async function handleSubmit() {
     }
   }
 
+  payload.meta = attachCoachingTip(payload.meta)
   submitting.value = true
   try {
     if (isEdit.value) {
       await updateQuestion(id.value, payload)
-      ElMessage.success('保存成功')
+      ElMessage.success(t('common.saveSuccess'))
     } else {
       await createQuestion(payload)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('common.createSuccess'))
     }
     router.push('/questions/list')
   } catch (e) {

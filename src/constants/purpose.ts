@@ -1,5 +1,7 @@
 export type QuestionPurpose = 'real' | 'practice' | 'mock'
 
+export const DEFAULT_PURPOSE: QuestionPurpose = 'real'
+
 export const QUESTION_PURPOSES: { value: QuestionPurpose; label: string }[] = [
   { value: 'real', label: '真题' },
   { value: 'practice', label: '练习' },

@@ -89,7 +89,7 @@ export interface QuestionQuery {
   type_section?: string
   keyword?: string
   difficulty?: number
-  purpose?: string
+  purpose?: string | string[]
   status?: number | string
 }
 

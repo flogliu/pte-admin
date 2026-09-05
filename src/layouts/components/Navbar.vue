@@ -21,6 +21,27 @@
       </el-breadcrumb>
     </div>
     <div class="nav-right">
+      <div
+        class="locale-switch"
+        role="group"
+        :aria-label="t('locale.zh') + ' / ' + t('locale.en')"
+      >
+        <button
+          type="button"
+          :class="localeBtnClass(appStore.language === 'zh-CN')"
+          @click="appStore.setLanguage('zh-CN')"
+        >
+          {{ t('locale.zh') }}
+        </button>
+        <span class="locale-sep">|</span>
+        <button
+          type="button"
+          :class="localeBtnClass(appStore.language === 'en')"
+          @click="appStore.setLanguage('en')"
+        >
+          {{ t('locale.en') }}
+        </button>
+      </div>
       <el-dropdown trigger="click" @command="handleCommand">
         <div class="user-info">
           <el-avatar :size="32" :src="userStore.avatar">
@@ -47,7 +68,7 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue'
 import { useRoute, useRouter, type RouteRecordNormalized } from 'vue-router'
-import { useUserStore } from '@/stores'
+import { useAppStore, useUserStore } from '@/stores'
 import { ElMessageBox } from 'element-plus'
 import { DArrowLeft, DArrowRight } from '@element-plus/icons-vue'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
@@ -69,6 +90,16 @@ defineEmits<{
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const appStore = useAppStore()
+const { t } = useI18n()
+
+function localeBtnClass(active: boolean) {
+  if (active) {
+    return 'locale-btn is-active'
+  } else {
+    return 'locale-btn'
+  }
+}
 
 function resolveMenuIcon(iconName?: string): Component | undefined {
   if (!iconName) {
@@ -174,6 +205,36 @@ async function handleCommand(cmd: string) {
 .crumb-icon {
   font-size: 16px;
   color: #606266;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.locale-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.locale-btn {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-size: 13px;
+  color: #909399;
+
+  &.is-active {
+    color: #303133;
+    font-weight: 600;
+  }
+}
+
+.locale-sep {
+  color: #c0c4cc;
 }
 
 .nav-right {

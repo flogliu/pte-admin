@@ -17,10 +17,16 @@ export function getQuestionSections(): Promise<ApiResponse<QuestionSection[]>> {
 }
 
 export function getQuestionList(params: QuestionQuery): Promise<ApiResponse<PageResult<Question>>> {
+  const purpose = Array.isArray(params.purpose)
+    ? params.purpose.join(',')
+    : params.purpose
   return request({
     url: '/admin/questions',
     method: 'get',
-    params,
+    params: {
+      ...params,
+      purpose,
+    },
   })
 }
 

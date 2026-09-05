@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { syncI18nLocale } from '@/i18n'
 
 type LayoutMode = 'side' | 'top'
 
@@ -28,6 +29,7 @@ export const useAppStore = defineStore('app', {
     },
     setLanguage(lang: 'zh-CN' | 'en') {
       this.language = lang
+      syncI18nLocale(lang)
     },
   },
   persist: {

@@ -12,26 +12,25 @@
       <span v-if="props.form.difficulty == null" class="score-hint">未设置</span>
     </div>
   </el-form-item>
-  <el-form-item label="标记" required>
-    <el-radio-group v-model="props.form.purpose">
-      <el-radio
-        v-for="item in QUESTION_PURPOSES"
-        :key="item.value"
-        :value="item.value"
-      >
-        {{ item.label }}
-      </el-radio>
-    </el-radio-group>
+  <el-form-item label="解读">
+    <el-input
+      v-model="props.metaFields.coachingTip"
+      type="textarea"
+      :rows="5"
+      maxlength="2000"
+      show-word-limit
+      placeholder="选填，题目点拨或答题解读"
+    />
   </el-form-item>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { QuestionForm } from '@/types'
-import { QUESTION_PURPOSES } from '@/constants/purpose'
 
 const props = defineProps<{
   form: QuestionForm
+  metaFields: { coachingTip: string }
 }>()
 
 const difficultyModel = computed({

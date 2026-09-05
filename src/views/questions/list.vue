@@ -2,6 +2,17 @@
   <div class="page-container">
     <div class="page-card">
       <el-form :inline="true" :model="query" class="filter-bar" @submit.prevent>
+        <el-form-item label="题库类型">
+          <el-checkbox-group v-model="query.purpose" @change="onPurposeChange">
+            <el-checkbox
+              v-for="item in QUESTION_PURPOSES"
+              :key="item.value"
+              :value="item.value"
+            >
+              {{ item.label }}
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
         <el-form-item label="关键词">
           <el-input
             v-model="query.keyword"
@@ -75,16 +86,6 @@
                 :key="t.id"
                 :label="t.label"
                 :value="t.id"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="标记">
-            <el-select v-model="query.purpose" placeholder="全部" clearable style="width: 140px">
-              <el-option
-                v-for="item in QUESTION_PURPOSES"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
               />
             </el-select>
           </el-form-item>
@@ -348,7 +349,7 @@ const query = reactive<QuestionQuery>({
   question_type_id: undefined,
   type_section: '',
   keyword: '',
-  purpose: '',
+  purpose: [],
   status: '',
 })
 
@@ -433,6 +434,11 @@ async function handleExamTypeChangeOnList() {
   loadList()
 }
 
+function onPurposeChange() {
+  query.page = 1
+  loadList()
+}
+
 async function loadList() {
   loading.value = true
   try {
@@ -451,7 +457,7 @@ function resetQuery() {
   query.question_type_id = undefined
   query.type_section = ''
   query.keyword = ''
-  query.purpose = ''
+  query.purpose = []
   query.status = ''
   loadList()
 }
