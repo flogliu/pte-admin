@@ -11,7 +11,9 @@ import './styles/index.scss'
 const app = createApp(App)
 
 app.use(pinia)
-applyStoreLanguage(useAppStore())
+const appStore = useAppStore()
+appStore.setLanguage('zh-CN')
+applyStoreLanguage(appStore)
 app.use(i18n)
 app.use(router)
 app.use(ElementPlus)
