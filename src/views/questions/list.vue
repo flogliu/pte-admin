@@ -92,6 +92,8 @@
         </el-form>
       </el-collapse-transition>
 
+      <div class="list-divider" />
+
       <div class="toolbar">
         <div class="toolbar-left">
           <el-button type="primary" @click="goCreate">
@@ -540,6 +542,12 @@ watch(
 
 .count-tag {
   margin-right: 0;
+}
+
+.list-divider {
+  height: 1px;
+  margin: 4px 0 8px;
+  background-color: #ebeef5;
 }
 
 .filter-bar {
