@@ -170,6 +170,21 @@
               </el-form-item>
             </template>
 
+            <template v-else-if="isSummarizeGroupDiscussion">
+              <SummarizeGroupDiscussionFields
+                v-model:audio-url="metaFields.audioUrl"
+                v-model:transcript="metaFields.transcript"
+                v-model:model-answer-text="metaFields.referenceText"
+              />
+              <el-form-item label="状态">
+                <el-select v-model="form.status" placeholder="未设置" clearable style="width: 220px">
+                  <el-option label="启用" :value="0" />
+                  <el-option label="禁用" :value="1" />
+                  <el-option label="草稿" :value="2" />
+                </el-select>
+              </el-form-item>
+            </template>
+
             <template v-else-if="isSummarizeWrittenText">
               <SummarizeWrittenTextFields
                 v-model:passage-text="form.content"
@@ -544,6 +559,7 @@ import AnswerShortQuestionFields from './components/AnswerShortQuestionFields.vu
 import DescribeImageFields from './components/DescribeImageFields.vue'
 import RespondSituationFields from './components/RespondSituationFields.vue'
 import RetellLectureFields from './components/RetellLectureFields.vue'
+import SummarizeGroupDiscussionFields from './components/SummarizeGroupDiscussionFields.vue'
 import SummarizeWrittenTextFields from './components/SummarizeWrittenTextFields.vue'
 import WriteEmailFields from './components/WriteEmailFields.vue'
 import WriteEssayFields from './components/WriteEssayFields.vue'
@@ -701,6 +717,15 @@ const isRetellLecture = computed(() => {
     return false
   }
   return type.code === 'RL' || type.slug === 're-tell-lecture'
+})
+
+const isSummarizeGroupDiscussion = computed(() => {
+  const type = currentType.value
+  if (!type) {
+    return false
+  } else {
+    return type.code === 'SGD' || type.slug === 'summarize-group-discussion'
+  }
 })
 
 const isSummarizeWrittenText = computed(() => {
@@ -866,6 +891,7 @@ const isDedicatedFormType = computed(
     isRespondToSituation.value ||
     isAnswerShortQuestion.value ||
     isRetellLecture.value ||
+    isSummarizeGroupDiscussion.value ||
     isSummarizeWrittenText.value ||
     isWriteEmail.value ||
     isWriteEssay.value ||
@@ -1100,6 +1126,8 @@ function loadMetaToFields() {
     } else if (isRetellLecture.value) {
       metaFields.referenceText = obj.referenceText || ''
       metaFields.referenceAudioUrl = obj.referenceAudioUrl || ''
+    } else if (isSummarizeGroupDiscussion.value) {
+      metaFields.referenceText = obj.referenceText || ''
     } else if (isSummarizeWrittenText.value) {
       metaFields.referenceText = obj.referenceText || ''
     } else if (isWriteEmail.value) {
@@ -1130,6 +1158,7 @@ function loadMetaToFields() {
     }
     if (
       isSummarizeSpokenText.value ||
+      isSummarizeGroupDiscussion.value ||
       isListeningMcMultiple.value ||
       isListeningMcSingle.value ||
       isListeningHcs.value ||
@@ -1456,6 +1485,34 @@ function buildRetellLecturePayload(): Record<string, any> {
     title,
     content: title,
     meta: buildRetellLectureMeta(),
+  }
+}
+
+function buildSummarizeGroupDiscussionPayload(): Record<string, any> {
+  const audioUrl = metaFields.audioUrl.trim()
+  if (!audioUrl) {
+    throw new Error('请上传语音')
+  } else {
+    return finishSummarizeGroupDiscussionPayload(audioUrl)
+  }
+}
+
+function finishSummarizeGroupDiscussionPayload(audioUrl: string): Record<string, any> {
+  const transcript = metaFields.transcript.trim()
+  const modelAnswer = metaFields.referenceText.trim()
+  const titleSource = transcript || modelAnswer || 'Summarize Group Discussion'
+  const meta: Record<string, string> = { audioUrl }
+  if (transcript) {
+    meta.transcript = transcript
+  }
+  if (modelAnswer) {
+    meta.referenceText = modelAnswer
+  }
+  return {
+    ...buildFormExtras(),
+    title: buildTitleFromContent(titleSource),
+    content: transcript,
+    meta,
   }
 }
 
@@ -2265,6 +2322,13 @@ async function handleSubmit() {
   } else if (isRetellLecture.value) {
     try {
       payload = buildRetellLecturePayload()
+    } catch (e: any) {
+      ElMessage.error(e.message || '请完善题目信息')
+      return
+    }
+  } else if (isSummarizeGroupDiscussion.value) {
+    try {
+      payload = buildSummarizeGroupDiscussionPayload()
     } catch (e: any) {
       ElMessage.error(e.message || '请完善题目信息')
       return
